@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pengumuman Lolos OSIM 2026</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif}
+body{background:#f8fafc}
+.header{background:linear-gradient(135deg,#14532d,#166534);color:white;padding:18px;text-align:center;position:sticky;top:0;z-index:10}
+.card{background:white;padding:18px;border-radius:18px;box-shadow:0 4px 20px rgba(0,0,0,.06);border:1px solid #e2e8f0;max-width:720px;margin:18px auto}
+.page{display:none}.page.active{display:block}
+input,select{width:100%;padding:13px;border:1.5px solid #cbd5e1;border-radius:12px;background:#f8fafc;margin:7px 0;font-size:14px}
+.btn{padding:12px;border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn-green{background:#14532d;color:white;width:100%}
+.btn-red{background:#fee2e2;color:#991b1b;width:auto;padding:8px 12px;font-size:12px}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:8px 0}
+.tab{white-space:nowrap;padding:7px 12px;border-radius:20px;border:1px solid #e2e8f0;background:#f8fafc;font-size:12px;font-weight:600;cursor:pointer}
+.tab.active{background:#14532d;color:white}
+.row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #f1f5f9}
+.badge-bidang{font-size:10px;background:#14532d;color:white;padding:3px 8px;border-radius:20px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h2>OSIM MAN 2 BENGKALIS 2026</h2>
+  <small id="headerSub">PENGUMUMAN FINAL LOLOS WAWANCARA</small>
+  <div style="margin-top:10px"><button class="btn" style="background:rgba(255,255,255,.15);color:white;font-size:11px" onclick="showPage('home')">PENGUMUMAN</button> <button class="btn" style="background:rgba(255,255,255,.15);color:white;font-size:11px" onclick="showPage('login')">ADMIN</button></div>
+</div>
+
+<!-- HOME / PENGUMUMAN -->
+<div id="page-home" class="page active">
+  <div class="card">
+    <div style="text-align:center"><div style="font-size:40px">🎉</div><h2 style="color:#14532d">Selamat! Daftar Lolos OSIM</h2><p style="color:#64748b;font-size:13px;margin-top:5px">Total <b id="countLolos">0</b> peserta dinyatakan lolos</p></div>
+    <input id="search" placeholder="🔍 Cari nama..." oninput="renderHome()">
+    <div class="tabs">
+      <div class="tab active" onclick="setFilter('SEMUA',this)">SEMUA</div>
+      <div class="tab" onclick="setFilter('PENDIDIKAN',this)">PENDIDIKAN</div>
+      <div class="tab" onclick="setFilter('KEAGAMAAN',this)">KEAGAMAAN</div>
+      <div class="tab" onclick="setFilter('OLAHRAGA',this)">OLAHRAGA</div>
+      <div class="tab" onclick="setFilter('PERLENGKAPAN',this)">PERLENGKAPAN</div>
+      <div class="tab" onclick="setFilter('HUMAS',this)">HUMAS</div>
+    </div>
+    <div id="listHome" style="margin-top:10px">Belum ada data</div>
+  </div>
+</div>
+
+<!-- LOGIN ADMIN -->
+<div id="page-login" class="page">
+  <div class="card"><h3>Login Admin</h3><input id="u" placeholder="Username"><input id="p" type="password" placeholder="Password"><button class="btn btn-green" onclick="login()">MASUK</button><small style="color:#94a3b8">default: admin / man2bengkalis</small></div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div id="page-admin" class="page">
+  <div class="card">
+    <h3>Dashboard Admin - Tambah Lolos</h3>
+    <input id="nama" placeholder="Nama Lengkap">
+    <input id="kelas" placeholder="Kelas (ex: XI IPA 1)">
+    <select id="bidang">
+      <option value="" disabled selected>Pilih Bidang</option>
+      <option>BID.PENDIDIKAN & BELANEGARA</option>
+      <option>BID.KEAGAMAAN & KEDISIPLINAN</option>
+      <option>BID.OLAHRAGA & SENI MINAT BAKAT</option>
+      <option>BID.PERLENGKAPAN & KEBERSIHAN</option>
+      <option>BID.HUMAS & DOKUMENTASI</option>
+    </select>
+    <button class="btn btn-green" onclick="tambah()">+ TAMBAH KE DAFTAR LOLOS</button>
+
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn" style="flex:1;background:#f1f5f9" onclick="exportData()">📥 EXPORT DATA</button>
+      <button class="btn" style="flex:1;background:#fee2e2;color:#991b1b" onclick="hapusSemua()">HAPUS SEMUA</button>
+    </div>
+
+    <div id="listAdmin" style="margin-top:16px"></div>
+  </div>
+</div>
+
+<script>
+let filter = 'SEMUA';
+let data = JSON.parse(localStorage.getItem('osim_final_lolos_2026') || '[]');
+
+function showPage(p){
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  if(p=='home') renderHome();
+  if(p=='admin') renderAdmin();
+}
+function login(){
+  if(u.value.toLowerCase()=='admin' && p.value.toLowerCase()=='man2bengkalis') showPage('admin');
+  else alert('Username / password salah!');
+}
+function save(){ localStorage.setItem('osim_final_lolos_2026', JSON.stringify(data)); }
+function tambah(){
+  let n=nama.value.trim(), k=kelas.value.trim(), b=bidang.value;
+  if(!n||!k||!b) return alert('Lengkapi!');
+  data.push({id:Date.now(), nama:n, kelas:k, bidang:b});
+  save(); nama.value=kelas.value=''; bidang.selectedIndex=0; renderAdmin(); renderHome();
+}
+function hapus(id){ if(confirm('Hapus?')){ data=data.filter(d=>d.id!=id); save(); renderAdmin(); renderHome(); } }
+function hapusSemua(){ if(confirm('Hapus semua data lolos?')){ data=[]; save(); renderAdmin(); renderHome(); } }
+function setFilter(f, el){ filter=f; document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); renderHome(); }
+
+function renderHome(){
+  let q = document.getElementById('search').value.toLowerCase();
+  let filtered = data.filter(d=>{
+    let fb = filter=='SEMUA' || d.bidang.toUpperCase().includes(filter);
+    let fn = d.nama.toLowerCase().includes(q);
+    return fb && fn;
+  });
+  document.getElementById('countLolos').innerText = data.length;
+  let h=''; if(!filtered.length) h='<p style="text-align:center;color:#94a3b8;padding:20px">Belum ada data lolos</p>';
+  filtered.forEach(d=>{
+    h+=`<div class="row"><div><b>${d.nama}</b><br><small style="color:#64748b">${d.kelas}</small></div><span class="badge-bidang">${d.bidang.replace('BID.','')}</span></div>`;
+  });
+  document.getElementById('listHome').innerHTML=h;
+}
+function renderAdmin(){
+  let h=''; if(!data.length) h='<p style="text-align:center;color:#94a3b8">Belum ada data</p>';
+  data.forEach(d=>{
+    h+=`<div class="row"><div><b>${d.nama}</b><br><small>${d.kelas} - ${d.bidang}</small></div><button class="btn btn-red" onclick="hapus(${d.id})">HAPUS</button></div>`;
+  });
+  document.getElementById('listAdmin').innerHTML=h;
+}
+function exportData(){
+  let json = JSON.stringify(data, null, 2);
+  let blob = new Blob([json], {type:'application/json'});
+  let a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='data-lolos-osim-2026.json'; a.click();
+  alert('File JSON terdownload. Simpan baik-baik sebagai backup!');
+}
+renderHome();
+</script>
+</body>
+  </html>
